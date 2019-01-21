@@ -1,0 +1,98 @@
+#include "CompoundHistoUnfolding.hh"
+#include "Utilities.hh"
+#include "TFile.h"
+#include <stdio.h>
+#include "TApplication.h"
+#include "TCanvas.h"
+#include "TColor.h"
+#include "TH1F.h"
+#include "TMath.h"
+int main()
+{
+  const unsigned char jetind    = 0;
+  const unsigned char chargeind = 0;
+  const char * sampletag        = "MC13TeV_TTJets";
+  //  const char * observable       = "pull_angle";
+  const char * observable       = "pvmag";
+  const unsigned char levelind  = 0;
+  const bool calculate_bins     = false;
+  float bmin;
+  float bmax;
+  float coeff;
+  if (string(observable).compare("pull_angle") == 0)
+    {
+      bmin = 0.0;
+      bmax = TMath::Pi();
+      coeff = 0.3;
+    }
+ if (string(observable).compare("pvmag") == 0)
+    {
+      bmin = 0.0;
+      bmax = 0.015;
+      coeff = 0.6;
+    }
+ 
+  unsigned char nbins = 20;
+  TApplication app("myapp", 0, 0);
+  CompoundHistoUnfolding chisto("migration", "migration; reco; gen", nbins, bmin, bmax, nbins, bmin, bmax);
+  chisto.SetName("ORIG");
+  chisto.jetcode    = jetind;
+  chisto.chargecode = chargeind;
+  chisto.signaltag  = sampletag;
+  chisto.observable = observable;
+  chisto.SetFolder("test_output");
+  chisto.LoadHistos("/afs/cern.ch/work/v/vveckaln/private/CMSSW_8_0_26_patch1/src/TopLJets2015/TopAnalysis/data/era2016/samples.json");
+  chisto.LoadHistos("/afs/cern.ch/work/v/vveckaln/private/CMSSW_8_0_26_patch1/src/TopLJets2015/TopAnalysis/data/era2016/qcd_samples.json");
+
+  chisto.LoadHistos("/afs/cern.ch/work/v/vveckaln/private/CMSSW_8_0_26_patch1/src/TopLJets2015/TopAnalysis/data/era2016/syst_samples_pruned.json", THEORSYS);
+  chisto.LoadHistos("/afs/cern.ch/work/v/vveckaln/private/CMSSW_8_0_26_patch1/src/TopLJets2015/TopAnalysis/data/era2016/expsyst_samples.json", EXPSYS);
+  //TCanvas *creco = new TCanvas("t", "t");//chisto.CreateCombinedPlot(RECO, ORIG);
+  //chisto.AggregateBackgroundMCs();
+  chisto.Process();
+  chisto.PullAnalysis();
+  TCanvas *crecoIN = chisto.CreateCombinedPlot(RECO, IN);
+  TCanvas *cgenIN = chisto.CreateCombinedPlot(GEN, IN);
+  TCanvas *crecoOUT = chisto.CreateCombinedPlot(RECO, OUT);
+  TCanvas *cgenOUT = chisto.CreateCombinedPlot(GEN, OUT);
+  TFile * f = TFile::Open("testCompoundHistoUnfolding.root", "RECREATE");
+  //chisto.Do();
+  unsigned long size;
+  float * ybins = chisto.splitForMinSigmaM(size, coeff);
+  float * xbins = CompoundHistoUnfolding::split(ybins, size);
+  for (unsigned long ind = 0; ind < size; ind ++)
+    {
+      printf("y: ind %u ybins[ind] %f\n", ind, ybins[ind]); 
+    }
+  for (unsigned long ind = 0; ind < 2*(size - 1) + 1; ind ++)
+    {
+      printf("x: ind %u xbins[ind] %f\n", ind, xbins[ind]); 
+    }
+  
+  CompoundHistoUnfolding chistoopt("migration", "migration; reco; gen", 2 * (size - 1) , xbins, size - 1, ybins);
+
+  chistoopt.SetName("OPT");
+  chistoopt.jetcode    = jetind;
+  chistoopt.chargecode = chargeind;
+  chistoopt.signaltag  = sampletag;
+  chistoopt.observable = observable;
+  chistoopt.SetOrigBinWidth((bmax - bmin)/nbins);
+  chistoopt.SetSignalTag(sampletag);
+  chistoopt.SetFolder("test_output");
+  chistoopt.LoadHistos("/afs/cern.ch/work/v/vveckaln/private/CMSSW_8_0_26_patch1/src/TopLJets2015/TopAnalysis/data/era2016/samples.json");
+  chistoopt.LoadHistos("/afs/cern.ch/work/v/vveckaln/private/CMSSW_8_0_26_patch1/src/TopLJets2015/TopAnalysis/data/era2016/qcd_samples.json");
+
+  chistoopt.LoadHistos("/afs/cern.ch/work/v/vveckaln/private/CMSSW_8_0_26_patch1/src/TopLJets2015/TopAnalysis/data/era2016/syst_samples_pruned.json", THEORSYS);
+  chistoopt.LoadHistos("/afs/cern.ch/work/v/vveckaln/private/CMSSW_8_0_26_patch1/src/TopLJets2015/TopAnalysis/data/era2016/expsyst_samples.json", EXPSYS);
+  chistoopt.Process();
+  chistoopt.PullAnalysis();
+  TCanvas *crecoINopt = chistoopt.CreateCombinedPlot(RECO, IN);
+  TCanvas *cgenINopt = chistoopt.CreateCombinedPlot(GEN, IN);
+  TCanvas *crecoOUTopt = chistoopt.CreateCombinedPlot(RECO, OUT);
+  TCanvas *cgenOUTopt = chistoopt.CreateCombinedPlot(GEN, OUT);
+  f -> cd ();
+  app.Run(kTRUE);
+  
+  app.Terminate();
+  f -> Close();
+
+}

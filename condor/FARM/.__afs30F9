@@ -1,0 +1,6 @@
+executable  = /afs/cern.ch/work/v/vveckaln/private/UnfoldingLIB/condor/FARM/$(cfgFile).sh
+output      = /afs/cern.ch/work/v/vveckaln/private/UnfoldingLIB/condor/CONDOROUT/$(cfgFile).out
+error       = /afs/cern.ch/work/v/vveckaln/private/UnfoldingLIB/condor/CONDOROUT/$(cfgFile).err
+log         = /afs/cern.ch/work/v/vveckaln/private/UnfoldingLIB/condor/FARM/*.$(ClusterId).log
+arguments   = $(ClusterId) $(ProcId)
++JobFlavour = "workday"

@@ -1,0 +1,74 @@
+000 (902689.000.000) 01/06 10:18:09 Job submitted from host: <137.138.44.75:9618?addrs=137.138.44.75-9618+[2001-1458-d00-1a--b]-9618&noUDP&sock=124143_59c7_28>
+...
+000 (902689.001.000) 01/06 10:18:09 Job submitted from host: <137.138.44.75:9618?addrs=137.138.44.75-9618+[2001-1458-d00-1a--b]-9618&noUDP&sock=124143_59c7_28>
+...
+000 (902689.002.000) 01/06 10:18:09 Job submitted from host: <137.138.44.75:9618?addrs=137.138.44.75-9618+[2001-1458-d00-1a--b]-9618&noUDP&sock=124143_59c7_28>
+...
+000 (902689.003.000) 01/06 10:18:09 Job submitted from host: <137.138.44.75:9618?addrs=137.138.44.75-9618+[2001-1458-d00-1a--b]-9618&noUDP&sock=124143_59c7_28>
+...
+000 (902689.004.000) 01/06 10:18:09 Job submitted from host: <137.138.44.75:9618?addrs=137.138.44.75-9618+[2001-1458-d00-1a--b]-9618&noUDP&sock=124143_59c7_28>
+...
+000 (902689.005.000) 01/06 10:18:09 Job submitted from host: <137.138.44.75:9618?addrs=137.138.44.75-9618+[2001-1458-d00-1a--b]-9618&noUDP&sock=124143_59c7_28>
+...
+000 (902689.006.000) 01/06 10:18:09 Job submitted from host: <137.138.44.75:9618?addrs=137.138.44.75-9618+[2001-1458-d00-1a--b]-9618&noUDP&sock=124143_59c7_28>
+...
+000 (902689.007.000) 01/06 10:18:09 Job submitted from host: <137.138.44.75:9618?addrs=137.138.44.75-9618+[2001-1458-d00-1a--b]-9618&noUDP&sock=124143_59c7_28>
+...
+001 (902689.000.000) 01/06 10:20:06 Job executing on host: <188.185.186.213:9618?addrs=188.185.186.213-9618+[--1]-9618&noUDP&sock=8818_8175_3>
+...
+001 (902689.001.000) 01/06 10:20:11 Job executing on host: <188.185.52.33:9618?addrs=188.185.52.33-9618+[--1]-9618&noUDP&sock=8840_a3b1_3>
+...
+009 (902689.002.000) 01/06 10:20:13 Job was aborted by the user.
+	via condor_rm (by user vveckaln)
+...
+009 (902689.003.000) 01/06 10:20:13 Job was aborted by the user.
+	via condor_rm (by user vveckaln)
+...
+009 (902689.004.000) 01/06 10:20:13 Job was aborted by the user.
+	via condor_rm (by user vveckaln)
+...
+009 (902689.005.000) 01/06 10:20:13 Job was aborted by the user.
+	via condor_rm (by user vveckaln)
+...
+009 (902689.006.000) 01/06 10:20:13 Job was aborted by the user.
+	via condor_rm (by user vveckaln)
+...
+009 (902689.007.000) 01/06 10:20:13 Job was aborted by the user.
+	via condor_rm (by user vveckaln)
+...
+006 (902689.000.000) 01/06 10:20:14 Image size of job updated: 32016
+	19  -  MemoryUsage of job (MB)
+	18644  -  ResidentSetSize of job (KB)
+...
+006 (902689.001.000) 01/06 10:20:14 Image size of job updated: 1000
+	0  -  MemoryUsage of job (MB)
+	0  -  ResidentSetSize of job (KB)
+...
+004 (902689.001.000) 01/06 10:20:14 Job was evicted.
+	(0) Job was not checkpointed.
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+	6771  -  Run Bytes Sent By Job
+	975  -  Run Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated
+	   Cpus                 :                 1         1
+	   Disk (KB)            :       19        1   1807548
+	   Memory (MB)          :        0     2000      2000
+...
+009 (902689.001.000) 01/06 10:20:14 Job was aborted by the user.
+	via condor_rm (by user vveckaln)
+...
+004 (902689.000.000) 01/06 10:20:14 Job was evicted.
+	(0) Job was not checkpointed.
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+	7151  -  Run Bytes Sent By Job
+	979  -  Run Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated
+	   Cpus                 :                 1         1
+	   Disk (KB)            :       20        1   2067052
+	   Memory (MB)          :       19     2000      2000
+...
+009 (902689.000.000) 01/06 10:20:14 Job was aborted by the user.
+	via condor_rm (by user vveckaln)
+...

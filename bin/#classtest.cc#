@@ -1,0 +1,41 @@
+#include <stdio.h>
+class A
+{
+public:
+  A()
+  {
+    printf("constructing A\n");
+  }
+  ~A()
+  {
+    printf("deconstrucgin A\n");
+  }
+};
+
+class B
+{
+public:
+  A * a;
+  B()
+  {
+    a = new A();
+  }
+  A & getA()
+  {
+    return *a;
+  }
+  ~B()
+  {
+    printf("deconstructing B\n");
+  }
+
+};
+
+int main()
+{
+  B b;
+  {
+    b.getA();
+  }
+  
+}
