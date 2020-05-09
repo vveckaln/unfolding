@@ -5,13 +5,13 @@ echo "klist" >&2
 klist >&2
 echo "end klist" >&2
 echo "ls EOS" >&2
-ls /eos/user/v/vveckaln >&2
+eos root://eosuser.cern.ch ls /eos/user/v/vveckaln >&2
 echo "end ls EOS" >&2
 CLUSTERID=$1
 PROCID=$2
 UNFOLDINGLIB=/afs/cern.ch/work/v/vveckaln/private/UnfoldingLIB
 echo -e "@JOBTAG\t${PROCID}\t"`date` >> $UNFOLDINGLIB/condor/registry_$CLUSTERID.txt
-source $UNFOLDINGLIB/condor/run_job.sh @OUTPUTDIR @JOBTAG @JETIND @CHARGEIND @SAMPLE @OBSERVABLE @LEVELIND @METHOD @PRESAMPLETTJETS @BINNING_METHOD @BINS @SFACTOR
+source $UNFOLDINGLIB/condor/run_job.sh @OUTPUTDIR @JOBTAG @JETIND @CHARGEIND @SAMPLE @OBSERVABLE @LEVELIND @METHOD @PRESAMPLETTJETS @BINNING_METHOD @BINS @SFACTOR @REG
 #EXIT_CODE=$?
 
 

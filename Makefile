@@ -3,18 +3,21 @@ BIN_FILES   := $(wildcard bin/*.cc)
 EXECUTABLES := $(notdir $(BIN_FILES:.cc=))
 OBJ_FILES   := $(addprefix obj/,$(notdir $(CC_FILES:.cc=.o)))
 CC_FLAGS    := -g
-
+REPO        := /afs/cern.ch/work/v/vveckaln/private/CompoundHistoLib
+ROOUNFOLD   := /afs/cern.ch/work/v/vveckaln/private/RooUnfold
+#libRooUnfold.so
 all: $(EXECUTABLES) 
 
+
+$(EXECUTABLES): %: bin/%.cc $(OBJ_FILES)
+	g++ -Wall `root-config --libs --cflags` -std=c++14 -g -o $@ $^ -I include -I $(REPO)/interface -L${REPO}/lib -lCompoundHisto  -Wl,-rpath,${REPO}/lib -I $(ROOUNFOLD)/src -L${ROOUNFOLD} -lRooUnfold  -Wl,-rpath,${ROOUNFOLD}
+
 obj/%.o: src/%.cc
-	g++ `root-config --libs --cflags` $(CC_FLAGS) -c -o $@ $< -I include
-
-
-%: bin/%.cc $(OBJ_FILES)
-	g++ `root-config --libs --cflags` -g -o $@ $^ -I include
+	g++ -Wall `root-config --libs --cflags` $(CC_FLAGS) -std=c++14 -c -o $@ $< -I include -I $(REPO)/interface -I $(ROOUNFOLD)/src
 
 
 .PHONY: clean
 
 clean:
-	rm obj/*
+	for f in $(wildcard obj/*); do rm $$f; done
+	find . -maxdepth 1 -type f -perm +a=x -print0 | xargs -0 -I {} rm {}

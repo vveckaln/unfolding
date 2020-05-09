@@ -4,19 +4,3 @@ error       = /afs/cern.ch/work/v/vveckaln/private/UnfoldingLIB/condor/CONDOROUT
 log         = /afs/cern.ch/work/v/vveckaln/private/UnfoldingLIB/condor/FARM/*.$(ClusterId).log
 arguments   = $(ClusterId) $(ProcId)
 +JobFlavour = "workday"
-cfgFile=leading_jet_allconst_MC13TeV_TTJets_pvmag_OPT_nominal_ATLAS3
-queue 1
-cfgFile=leading_jet_chconst_MC13TeV_TTJets_pvmag_OPT_nominal_ATLAS3
-queue 1
-cfgFile=scnd_leading_jet_allconst_MC13TeV_TTJets_pvmag_OPT_nominal_ATLAS3
-queue 1
-cfgFile=scnd_leading_jet_chconst_MC13TeV_TTJets_pvmag_OPT_nominal_ATLAS3
-queue 1
-cfgFile=leading_b_allconst_MC13TeV_TTJets_pvmag_OPT_nominal_ATLAS3
-queue 1
-cfgFile=leading_b_chconst_MC13TeV_TTJets_pvmag_OPT_nominal_ATLAS3
-queue 1
-cfgFile=scnd_leading_b_allconst_MC13TeV_TTJets_pvmag_OPT_nominal_ATLAS3
-queue 1
-cfgFile=scnd_leading_b_chconst_MC13TeV_TTJets_pvmag_OPT_nominal_ATLAS3
-queue 1

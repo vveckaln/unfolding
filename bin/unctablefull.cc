@@ -3,18 +3,20 @@
 #include <string> 
 #include <map>
 using namespace std;
+TString insertnumber(float, const char *);
 void prepare_header(FILE *, const char * caption, const char * label, FILE * binfile, RecoLevelCode_t code);
 void prepare_footer(FILE *);
-  const char ** sampletitles = nullptr;
-
+const char ** sampletitles = nullptr;
+string env("");
 
 
 int main(int argc, char * argv[])
 {
-  assert(argc == 4);
+  assert(argc == 5);
   const string method(argv[1]);
   const string observable(argv[2]);
   const string binningmethod(argv[3]);
+  env = string(argv[4]);
   system((string("rm -r unc_") + method + "_full/" + observable + "/" + binningmethod).c_str());
   system((string("mkdir -p unc_") + method + "_full/" + observable + "/" + binningmethod).c_str());
   const char * observables[] = {"pull_angle", "pvmag"};
@@ -24,10 +26,11 @@ int main(int argc, char * argv[])
   const char * chargetags[2] = {"allconst", "chconst"};
   const char * recotags[2] = {"generator", "reconstruction"};
   const char * jettags[4] = {"leading_jet", "scnd_leading_jet", "leading_b", "scnd_leading_b"};
+  const char * opjettags[4] = {"scnd_leading_jet", "leading_jet", "scnd_leading_b", "leading_b"};
   const char * tagresult[2][2] = {{"input at the generator level", "input at the reconstruction level"}, {"unfolded ouput", "folded back output"}};
   const char ** samples = nullptr;
-  const char * sampletitles_nominal[3] = {"Powheg+Pythia8", "Powheg+Herwig", "aMC@NLO+Pythia8"};
-  const char * sampletitles_cflip[3] = {"Powheg+Pythia8 *", "Powheg+Pythia8 cf"};
+  const char * sampletitles_nominal[3] = {"\\POWHEG+\\PYTHIA 8", "\\POWHEG+\\HERWIG", "aMC@NLO+\\PYTHIA 8"};
+  const char * sampletitles_cflip[3] = {"\\POWHEG+\PYTHIA 8 *", "\\POWHEG+\\PYTHIA 8 cf"};
   unsigned char nsamples = 0;
   if (method.compare("nominal") == 0)
     {
@@ -37,7 +40,7 @@ int main(int argc, char * argv[])
     }
   if (method.compare("cflip") == 0)
     {
-      samples = samples_cflip;
+     samples = samples_cflip;
       sampletitles = sampletitles_cflip;
       nsamples = 2;
     }
@@ -98,9 +101,20 @@ int main(int argc, char * argv[])
 			tag_resultlevel[resultlevel] + "_" + samples[sample_ind] + ".txt";
 		      printf("%s\n", unc_name.Data());
 		      FILE * file = fopen(unc_name, "w");
-		      const TString  caption = TString("Bin by bin weight of uncertainty (shapes) for \\protect\\observabletitle{") + 
-			observable + "} including \\protect\\chargetitle{" + chargetags[charge_code] + "} of the \\protect\\jettitle{" +
-			jettags[jetcode] + "} at the \\protect\\recoleveltitle{" + tag_recolevel[recocode] + "} level. The results are for                        " + tagresult[resultlevel][recocode] + " for the " + sampletitles[sample_ind] + " sample.";
+		      TString  caption;
+		      if (observable_ind == 0)
+			{
+			  caption = TString("Bin by bin weight of uncertainty (shapes) for \\protect\\observabletitle{") + 
+			    observable + "} including \\protect\\chargetitle{" + chargetags[charge_code] + "} from the \\protect\\jettitle{" +
+			    jettags[jetcode] + "} to the \\protect\\jettitle{" + opjettags[jetcode] + "} at the \\protect\\recoleveltitle{" + tag_recolevel[recocode] + "} level. The results are for " + tagresult[resultlevel][recocode] + " for the " + sampletitles[sample_ind] + " sample.";
+			}
+		      else
+			{
+			  caption = TString("Bin by bin weight of uncertainty (shapes) for \\protect\\observabletitle{") + 
+			    observable + "} including \\protect\\chargetitle{" + chargetags[charge_code] + "} of the \\protect\\jettitle{" +
+			    jettags[jetcode] + "} at the \\protect\\recoleveltitle{" + tag_recolevel[recocode] + "} level. The results are for " + tagresult[resultlevel][recocode] + " for the " + sampletitles[sample_ind] + " sample.";
+			}
+		      caption += " The binning method of \\protect\\binningtitle{" + binningmethod + "} is used.";
 		      const TString  label = TString("unc_table_full") + 
 			observables[observable_ind] + "_" + 
 			tag_opt[opt_level] + "_" +
@@ -158,7 +172,7 @@ int main(int argc, char * argv[])
 			  unsigned char ind = 0;
 			  do {
 			    fscanf(input_file, "%f %f%c", &sys, &sig, &temp);
-			    printf("bin %u %.9f %.9f\n",  ind, sys, sig);
+			    printf("bin %u %s %s\n",  ind, insertnumber(sys, ".9").Data(), insertnumber(sig, ".9").Data());
 			    const float diffnom = 100 * fabs(sys - sig)/sig;
 			    diffmap[key][ind] = diffnom;
 			    ind ++;
@@ -169,7 +183,7 @@ int main(int argc, char * argv[])
 			  fprintf(file, "\t\t\t%s", mit -> first.Data());
 			  for (unsigned char bind = 0; bind < nbins; bind ++)
 			    {
-			      fprintf(file, "\t&\t%.3f", mit -> second[bind]);
+			      fprintf(file, "\t&\t%s", insertnumber(mit -> second[bind], ".3").Data());
 			    }
 			  fprintf(file, "\\\\\n");
 			}
@@ -195,10 +209,8 @@ int main(int argc, char * argv[])
 
 void prepare_header(FILE * file, const char * caption, const char * label, FILE * binfile, RecoLevelCode_t code)
 {
-  fprintf(file, "\\begin{table}[htp]\n");
-  fprintf(file, "\t\\begin{center}\n");
-  fprintf(file, "\t\\caption{%s}\n", caption);
-  fprintf(file, "\t\\label{tab:%s}\n", label);
+  //fprintf(file, "\\begin{longtable}[htp]\n");
+  // fprintf(file, "\t\\begin{center}\n");
   int nbins;
   fseek(binfile, 0, SEEK_SET);
   fscanf(binfile, "%u", & nbins);
@@ -215,41 +227,69 @@ void prepare_header(FILE * file, const char * caption, const char * label, FILE 
 	  ledge1 = ledge2;
 	  fscanf(binfile, "%f", &ledge2);
 	}
-      char line2add[64];
-      char line3add[64];
+      char line2add[128];
+      char line3add[128];
       line1 += "c";
       if (code == GEN)
 	{
-	  sprintf(line2add, " & bin %u ", bind + 1);
-	  sprintf(line3add, " & %.2f - %.2f", ledge1, ledge2);
+	  if (env.compare("lx") != 0)
+	    {
+	      sprintf(line2add, " & \\makecell{\\textbf{bin %u}} ", bind + 1);
+	      sprintf(line3add, " & \\makecell{\\textbf{%s\\textendash%s}}", insertnumber(ledge1, ".2").Data(), insertnumber(ledge2, ".2").Data());
+	    }
+	  else
+	    {
+	      sprintf(line2add, " & \\textbf{bin %u} ", bind + 1);
+	      sprintf(line3add, " & \\textbf{%s\\textendash%s}", insertnumber(ledge1, ".2").Data(), insertnumber(ledge2, ".2").Data());
+	    }
 	  line2 += line2add;
 	  line3 += line3add;
 	}
       if (code == RECO)
 	{
 	  line1 += "c";
-	  sprintf(line2add, " & bin %u & bin %u ", 2*bind, 2*bind + 1);
-	  sprintf(line3add, " & %.2f - %.2f & %.2f - %.2f", ledge1, 0.5*(ledge2 + ledge1), 0.5*(ledge2 + ledge1), ledge2);
+	  if (env.compare("lx") != 0)
+	    {
+	      sprintf(line2add, " & \\makecell{\\textbf{bin %u}} & \\makecell{\\textbf{bin %u}} ", 2*bind, 2*bind + 1);
+	      sprintf(line3add, " & \\makecell\\{textbf{%s\\textendash%s}} & \\makecell{\\textbf{%s\\textendash%s}}", insertnumber(ledge1, ".2").Data(), insertnumber(0.5*(ledge2 + ledge1), ".2").Data(), insertnumber(0.5*(ledge2 + ledge1), ".2").Data(), insertnumber(ledge2, ".2").Data());
+	    }
+	  else
+	    {
+	      sprintf(line2add, " & \\textbf{bin %u} & \\textbf{bin %u} ", 2*bind, 2*bind + 1);
+	      sprintf(line3add, " & \\textbf{%s\\textendash%s} & \\textbf{%s\\textendash%s}", insertnumber(ledge1, ".2").Data(), insertnumber(0.5*(ledge2 + ledge1), ".2").Data(), insertnumber(0.5*(ledge2 + ledge1), ".2").Data(), insertnumber(ledge2, ".2").Data());
+	    }
 	  line2 += line2add;
 	  line3 += line3add;
 
 	}
     }
 	 
-	 fprintf(file, "\t\t\\begin{tabular}{l|%s}\n", line1.c_str());
-       fprintf(file, "\t\t\t\\hline\n");
-       fprintf(file, "\t\t\t\\makecell[c]{\\multirow{3}{*}{nuisance}} &\\multicolumn{%u}{c}{uncertainty in bins (\\%)}\\\\\n", code == RECO ? 2*nbins : nbins);
-       fprintf(file, "\t\t\t%s \\\\\n", line2.c_str());
+  fprintf(file, "\t\t\\begin{longtable}{p{0.6\\linewidth}|%s}\n", line1.c_str());
+  fprintf(file, "\t\\caption{%s}\n", caption);
+  fprintf(file, "\t\\label{tab:%s}\\\\\n", label);
+  fprintf(file, "\t\t\t\\noalign{\\global\\arrayrulewidth=0.5mm}\\hline\\noalign{\\global\\arrayrulewidth=0.4pt}\n");
+  if (env.compare("lx") != 0)
+    fprintf(file, "\t\t\t\\makecell[c]{\\multirow{3}{*}{\\textbf{Nuisance}}} &\\multicolumn{%u}{c}{\\textbf{Uncertainty in bins [\\%]}}\\\\\n", code == RECO ? 2*nbins : nbins);
+  else
+    fprintf(file, "\t\t\t\\multirow{3}{*}{\\textbf{Nuisance}} &\\multicolumn{%u}{c}{\\textbf{Uncertainty in bins [\\%]}}\\\\\n", code == RECO ? 2*nbins : nbins);
+    
+  fprintf(file, "\t\t\t%s \\\\\n", line2.c_str());
   
-       fprintf(file, "\t\t\t%s \\\\\n", line3.c_str());
-       fprintf(file, "\t\t\t\\hline\n");
-       }
+  fprintf(file, "\t\t\t%s \\\\\n", line3.c_str());
+  fprintf(file, "\t\t\t\\hline\n");
+}
 
-  void prepare_footer(FILE *file)
-  {
-    fprintf(file, "\t\t\\hline\n");
-    fprintf(file, "\t\t\\end{tabular}\n");
-  fprintf(file, "\t\\end{center}\n");
-  fprintf(file, "\\end{table}\n");
+void prepare_footer(FILE *file)
+{
+  fprintf(file, "\t\t\\noalign{\\global\\arrayrulewidth=0.5mm}\\hline\n");
+  fprintf(file, "\t\t\\end{longtable}\n");
+  // fprintf(file, "\t\\end{center}\n");
+  // fprintf(file, "\\end{table}\n");
 
+}
+
+TString insertnumber(float n, const char * format)
+{
+  return Form((string("%") + format + "f").c_str(), n);
+  return TString("\\num{") + Form((string("%") + format + "f}").c_str(), n); 
 }

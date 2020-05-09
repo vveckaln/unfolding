@@ -1,3 +1,4 @@
+#python condor/submitjobs.py --binning_method=optfixed -n --observable=pull_angle
 import os
 import optparse, sys
 sys.path.insert(0, "/afs/cern.ch/work/v/vveckaln/private/CMSSW_8_0_26_patch1/src/TopLJets2015/TopAnalysis/condor/")
@@ -5,21 +6,25 @@ try:
     import testfilesanity
 except ImportError:
     print ('No Import')
-EOS=os.getenv('EOS')
-PROJECT="/afs/cern.ch/work/v/vveckaln/private/UnfoldingLIB" 
+EOS = os.getenv('EOS')
+PROJECT = "/afs/cern.ch/work/v/vveckaln/private/UnfoldingLIB" 
 FarmOutputDirectory = '%s/condor/CONDOROUT' % PROJECT
 FarmCfgDirectory = '%s/condor/FARM' % PROJECT
 
 usage = 'usage: %prog [options]'
 parser = optparse.OptionParser(usage)
-parser.add_option('-b', '--bins',           action = 'store_true',      dest = 'bins',            default = False,     help = 'calculate bins')
+parser.add_option('-b', '--bins',           action = 'store_true',      dest = 'bins',            default = False,     help = 'calculate bins SIGMA method')
 parser.add_option(      '--binning_method', type = 'string',            dest = 'binning_method',  default = '',        help = 'binning method')
-parser.add_option(      '--sfactor',        type = 'float',             dest = 'sfactor',         default = 0.0,       help = 'binning method')
-parser.add_option('-m', '--method',         type = 'string',            dest = 'method',          default = "nominal", help = 'nominal or tailor made implementation')
+parser.add_option(      '--sfactor',        type = 'float',             dest = 'sfactor',         default = 0.0,       help = 'sigma factor for SIGMA method')
+parser.add_option('-m', '--method',         type = 'string',            dest = 'method',          default = "nominal", help = 'nominal, cflip or GEN implementation')
 parser.add_option('-n',                     action = 'store_true',      dest = 'presampleTTJets', default = False,     help = 'fill signal histos for TTJets')
 parser.add_option(      '--observable',     type = 'string',            dest = 'observable',      default = '',        help = 'observable')
-
+parser.add_option('-r'  ,                   action = 'store_true',      dest = 'resubmission',    default = False,     help = 'resubmit jobs looking out for bad files')
+parser.add_option(      '--reg',            type = 'string',            dest = 'reg',             default = 'False',   help = 'regularisation')
 (opt, args)    = parser.parse_args()
+# print  opt.reg
+# print  str(opt.reg)
+# raw_input("penter")
 observable     = opt.observable
 bins           = opt.bins
 method         = opt.method
@@ -33,26 +38,31 @@ jettags              = ['leading_jet', 'scnd_leading_jet', 'leading_b', 'scnd_le
 chargetags           = ['allconst', 'chconst']
 levellist            = 0
 OutputDirectory      = 0
-
+bmethods             = ['ATLAS3', 'ATLAS4', 'optfixed', 'optfixed4', 'optfixedreg']
 if bins:
     OutputDirectory = '%s/bins/%s/SIGMA_%s' % (EOS, observable, str(sfactor).replace(".", "p"))
     OutputDirectory.replace(".", "p")
     levellist = [0]
     samplelist           = ['MC13TeV_TTJets']
 else:
-#    levellist = [0, 1]
-    levellist = [1]
+    levellist = 0
+    if binning_method in bmethods:
+        levellist = [1]
+    else:
+        levellist = [0, 1]
     if method == 'nominal':
         if opt.presampleTTJets:
             samplelist           = ['MC13TeV_TTJets']
         else:
             samplelist           = ['MC13TeV_TTJets_herwig']
             
-    if method == 'cflip':
+    elif method == 'cflip':
         if opt.presampleTTJets:
             samplelist           = ['MC13TeV_TTJets']
         else:
             samplelist           = ['MC13TeV_TTJets_cflip']
+    else :
+        samplelist               = ['MC13TeV_TTJets_' + method]
 
 leveltags            = ['ORIG', 'OPT']
 os.system('mkdir -p %s' % FarmOutputDirectory)
@@ -92,7 +102,7 @@ with open ('%s/condor.sub' % FarmCfgDirectory, 'w') as condor:
 #                        os.system('mkdir -p %s' % OutputDirectory)
                         job_tag = jettags[jetind] + '_' + chargetags[chargeind] + '_' + sampletag + '_' + observable + '_' + leveltags[levelind] + '_' + method + binmethodtag
                     else:
-                        job_tag = jettags[jetind] + '_' + chargetags[chargeind] + '_' + sampletag + '_' + observable + '_' + leveltags[levelind] + '_' + method + "_binSIGMA_" + str(sfactor).replace(".", "p")
+                        job_tag = jettags[jetind] + '_' + chargetags[chargeind] + '_' + sampletag + '_' + observable + '_' + leveltags[levelind] + '_' + method + "_binSIGMA_" + str(sfactor).replace("." , "p") 
 #                        os.system('mkdir -p %s' % OutputDirectory)
 
                     print "********* njob %u job_tag %s **************" % (njob, job_tag)
@@ -103,10 +113,12 @@ with open ('%s/condor.sub' % FarmCfgDirectory, 'w') as condor:
                             continue
                         else:
                             print 'bad file discovered %s' % (OutputDirectory + '/' + job_tag + '/save.root')
-                            raw_input("penter")
+                            if opt.resubmission:
+                                raw_input("penter")
                     else:
                         print 'file %s not found' % (OutputDirectory + '/' + job_tag + '/save.root')
-                        raw_input("penter")
+                        if opt.resubmission:
+                            raw_input("penter")
                     sjobs += 1
                     cfgFile = '%s' % job_tag
                     condor.write('cfgFile=%s\n' % cfgFile) 
@@ -124,11 +136,12 @@ with open ('%s/condor.sub' % FarmCfgDirectory, 'w') as condor:
                     sedcmd += 's%@BINNING_METHOD%'       + binning_method           + '%g;'
                     sedcmd += 's%@BINS%'                 + str(bins)                + '%g;'
                     sedcmd += 's%@SFACTOR%'              + str(sfactor)             + '%g;'
+                    sedcmd += 's%@REG%'                  + str(opt.reg)             + '%g;'
                     sedcmd += '\''
                 
                     os.system('cat ' + PROJECT + '/condor/executable_templ.sh | ' + sedcmd + ' > condor/FARM/' + cfgFile + '.sh')
                 
                     os.system('chmod u+x %s/%s.sh' % (FarmCfgDirectory, cfgFile))
 
-print 'Submitting %u jobs to condor, flavour "%s"' % (sjobs, "longlunch")
+print 'Submitting %u jobs to condor, flavour "%s"' % (sjobs, "workday")
 os.system('condor_config_val -dump | grep CONDOR; condor_submit %s/condor.sub' % FarmCfgDirectory)
