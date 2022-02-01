@@ -1,4 +1,4 @@
-// ./chitablefull nominal pull_angle ATLAS4 nonlx
+// ./chitablefullnew nominal pull_angle ATLAS4 nonlx bayesian cflip
 #include "Definitions.hh"
 #include <assert.h> 
 #include <string> 
@@ -14,37 +14,55 @@ const char *titles[2][4] = {
   {"$\\left|\\vec{P}(j_{1}^{W})\\right|$", "$\\left|\\vec{P}(j_{2}^{W})\\right|$", "$\\left|\\vec{P}(j_{1}^{b})\\right|$", "$\\left|\\vec{P}(j_{2}^{b})\\right|$"}
   };
 const char *sampletitles[3] = {"Powheg + Pythia8", "Powheg + Herwig++", "aMC@NLO + Pythia8"};
+const char * cflipsuffix[] = {"", "_cflip"};
+
 int main(int argc, char * argv[])
 {
-  assert(argc == 5);
+  assert(argc == 7);
   const string method(argv[1]);
   const string observable(argv[2]);
   const string binningmethod(argv[3]);
   env = string(argv[4]);
-  system((string("rm -r chi_full_") + method + "/" + observable + "/" + binningmethod).c_str());
+  const string unfm(argv[5]);
+  const bool includecflip = string(argv[6]).compare("cflip") == 0 ? true : false;
+  //  system((string("rm -r chi_full_") + method + "/" + observable + "/" + binningmethod).c_str());
   system((string("mkdir -p chi_full_") + method + "/" + observable + "/" + binningmethod).c_str());
   const char * observables[] = {"pull_angle", "pvmag"};
   const char * chargetags[2] = {"allconst", "chconst"};
   const char * observabletitles[] = {"pull angle \\pullangle", "magnitude of the pull vector \\pvmag"};
-  const char * samples_nominal[] = {"MC13TeV_TTJets", "MC13TeV_TTJets_herwig", "MC13TeV_TTJets2l2nu_amcatnlo"};
-  const char * samples_cflip[] = {"MC13TeV_TTJets", "MC13TeV_TTJets_cflip"};
-  const char ** samples = nullptr;
-  const char * sampletitles_nominal[3] = {"Powheg + Pythia8", "Powheg + Herwig++", "aMC@NLO + Pythia8"};
-  const char * sampletitles_cflip[3] = {"Powheg + Pythia8 *", "Powheg + Pythia8 cf"};
-  const char ** sampletitles = nullptr;
-  
+  const unsigned char Nmethods = 3;
+  const char ** samples[Nmethods] = 
+    {
+      new const char * [2] {"MC13TeV_TTJets", "MC13TeV_TTJets"},
+      new const char * [1] {"MC13TeV_TTJets_herwig"},
+      new const char * [1] {"MC13TeV_TTJets_cflip"}
+    };
+  const char ** sampletitles[Nmethods] = 
+    {
+      new const char * [2] {"Powheg + Pythia8", "Powheg + Pythia8 *"}, 
+      new const char * [1] {"Powheg + Herwig++$^{\\dagger}$"}, 
+      new const char * [1] {"Powheg + Pythia8 cf$^{\\dagger}$"}
+    };
+  unsigned char methodind = 4;
+  unsigned char cflipind = 3;
+  if (method.compare("nominal") == 0)
+    methodind = 0;
+  if (method.compare("herwig") == 0)
+    methodind = 1;
+  if (method.compare("cflip") == 0)
+    methodind = 2;
+  if (not includecflip)
+    cflipind = 0;
+  if (includecflip)
+    cflipind = 1;
   unsigned char nsamples = 0;
   if (method.compare("nominal") == 0)
     {
-      samples = samples_nominal;
-      sampletitles = sampletitles_nominal;
       nsamples = 2;
     }
-  if (method.compare("cflip") == 0)
+  if (method.compare("cflip") == 0 or method.compare("herwig") == 0)
     {
-      samples = samples_cflip;
-      sampletitles = sampletitles_cflip;
-      nsamples = 2;
+      nsamples = 1;
     }
   FILE * pFile[2][2][2];
   const TString input_folder = "/eos/user/v/vveckaln/unfolding_" + method + "/" + observable + "/" + binningmethod;
@@ -79,17 +97,21 @@ int main(int argc, char * argv[])
 	    observables[observable_ind] + "_" + 
 	    tag_opt[opt_level] + "_" +
 	    tag_charge_types_[charge_code] + "_" + 
-	    samples[sample_ind] + "_full.txt";
+	    samples[methodind][cflipind] + "_" + 
+	    unfm + "_" + 
+	    "full.txt";
 	  FILE *& file = pFile[observable_ind][opt_level][charge_code];
 	  file = fopen(latex_name, "w");
-	  const TString  caption = TString("$\\chi^{2}$ and \\pval s of \\protect\\observabletitle{") + observable + "} including \\protect\\chargetitle{" + chargetags[charge_code] + "}. The nuisances are substituted in place of the signal. The results are for the \\protect\\modeltitle{" + method + "} model.";
+	  const TString  caption = TString("$\\chi^{2}$ and \\pval s of \\protect\\observabletitle{") + observable + "} including \\protect\\chargetitle{" + chargetags[charge_code] + "}. The theoretical uncertainties are substituted in place of the signal. The results are for the \\protect\\modeltitle{" + method + "} model using \\protect\\unfoldingmethodtitle{" + unfm + "}";
 
 	  const TString  label = TString("chi_table_") + 
 	    observables[observable_ind] + "_" + 
 	    tag_opt[opt_level] + "_" +
 	    tag_charge_types_[charge_code] + "_" +
-	    samples[sample_ind] + "_" + 
-	    method + bintag + "_full";
+	    samples[methodind][cflipind] + "_" + 
+	    method + 
+	    bintag + "_" + 
+	    unfm + "_full";
 	  prepare_header(file, caption.Data(), label.Data(), observable_ind);
 	  map<TString, float *> chi2map;
 	  map<TString, int *> ndfmap;
@@ -99,7 +121,7 @@ int main(int argc, char * argv[])
 	      const TString binfilename = input_folder + "/" + 
 		tag_jet_types_[jetcode] + '_' + 
 		tag_charge_types_[charge_code] + '_' + 
-		samples[sample_ind] + '_' + 
+		samples[methodind][cflipind] + '_' + 
 		observables[observable_ind] + '_' + 
 		tag_opt[opt_level] + '_' + 
 		method + bintag + "/binfile.txt";
@@ -111,10 +133,12 @@ int main(int argc, char * argv[])
 	      const TString input_file_name = input_folder + "/" + 
 		tag_jet_types_[jetcode] + '_' + 
 		tag_charge_types_[charge_code] + '_' + 
-		samples[sample_ind] + '_' + 
+		samples[methodind][cflipind] + '_' + 
 		observables[observable_ind] + '_' + 
 		tag_opt[opt_level] + '_' + 
-		method + bintag + "/chi2.txt";
+		method + 
+		bintag + "/" + 
+		unfm + cflipsuffix[cflipind] + "/chi2.txt";
 	      printf("input file name %s\n", input_file_name.Data());
 	      system(string("cat ") + input_file_name);
 	      FILE  * input_file = fopen(input_file_name, "r");

@@ -1,0 +1,83 @@
+#include "TChain.h"
+#include "TH2.h"
+int main()
+{
+  const TString binfilename = "/eos/user/v/vveckaln/binning_pvmag/pvmag_allconst_leading_b/bins_allconst_leading_b.txt";
+  FILE * binfile = fopen(binfilename.Data(), "r");
+  printf("binfile %p\n", binfile);
+  unsigned long size;
+  fscanf(binfile, "%lu\n", &size);
+  system((string("cat ") + binfilename.Data()).c_str());
+  float * ybins = new float[size];
+  int r = 0;
+  unsigned char ind = 0;
+  while (r >= 0)
+    {
+      float store;
+      r = fscanf(binfile, "%f\n", &store);
+      if (r >= 0)
+	{
+	  ybins[ind] = store;
+	}
+      ind ++;
+    }
+  fclose(binfile);
+  TH2 *h2 = new TH2F("h", "h", size - 1, ybins, size - 1, ybins);
+    TChain chain("migration");
+  chain.Add(TString("$EOS/analysis_MC13TeV_TTJets/HADDmigration/migration_MC13TeV_TTJets.root/E_allconst_leading_b_migration");
+  chain.Add(TString("$EOS/analysis_MC13TeV_TTJets/HADDmigration/migration_MC13TeV_TTJets.root/M_allconst_leading_b_migration");
+  Float_t reco;
+  Float_t gen;
+  using namespace std;
+  vector<double> * weights = nullptr;
+  if (observable.compare("pull_angle") == 0)
+    {
+      chain.SetBranchAddress("pull_angle_reco", & reco);
+      chain.SetBranchAddress("pull_angle_gen",  & gen);
+    }
+  if (observable.compare("pvmag") == 0)
+    {
+      chain.SetBranchAddress("pvmag_reco", & reco);
+      chain.SetBranchAddress("pvmag_gen",  & gen);
+    }
+  chain.SetBranchAddress("weight",          & weights);
+      for (unsigned long event_ind = 0; event_ind < chain.GetEntries()/div; event_ind ++)
+	{
+	  if (event_ind % 10000 == 0)
+	    printf("%u\r", event_ind);
+	  chain.GetEntry(event_ind);
+	  _th2 -> Fill(reco == -10.0 ? reco : TMath::Abs(reco)/TMath::Pi(), gen == -10.0 ? gen : TMath::Abs(gen)/TMath::Pi(), (*weights)[0]);
+	  if (string(observable).compare("pull_angle") == 0)
+	    {
+	      if (reco != -10.0 and gen != -10.0)
+		{
+		  const unsigned char bind(_th2 -> GetXaxis() -> FindBin(TMath::Abs(reco)/TMath::Pi()) - 1);
+		  stdev_gen[bind] += TMath::Power((TMath::Abs(reco) - TMath::Abs(gen))/TMath::Pi() , 2.0)* (*weights)[0];  
+		  weights_gen[bind] += (* weights)[0];//TMath::Sqrt(TMath::Power(, 2.0) + TMath::Power((* weights)[0], 2.0));
+		}
+	    }
+	  if (string(observable).compare("pvmag") == 0)
+	    {
+	      
+	      if (reco >= 0.0 and reco < gmax and gen >= 0.0 and gen < gmax)
+		{
+		  const unsigned char bind(_th2 -> GetXaxis() -> FindBin(reco)- 1);
+		  stdev_gen[bind] += TMath::Power(reco - gen, 2.0) * (*weights)[0];  
+		  weights_gen[bind] += ( * weights)[0];
+		  // if (bind > nbins -1)
+		  //   {
+		  //     printf("bind %u reco %f\n", bind, reco);
+		  //     getchar();
+		  //   }
+		}
+	      if (reco > 0.0 and reco< reco_prev)
+		reco_prev = reco;
+	      if (gen > 0.0 and gen < gen_prev)
+		gen_prev = gen;
+	      _th2 -> Fill(reco, gen, (*weights)[0]);
+	    }
+	}
+
+
+  return 0;
+}

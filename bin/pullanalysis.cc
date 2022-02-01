@@ -7,31 +7,30 @@
 #include "TFile.h"
 #include "TKey.h"
 #include "TApplication.h"
-#include "THStack.h"
+#include "THStack.h";
 #include "TStyle.h"
 #include "TROOT.h"
 //no RECO for OUT
 int main(int argc, char * argv[])
 {
-  printf("Running executable \"schmitt\"\n");
+  printf("Running executable \"pullanalysis\"\n");
   gStyle -> SetOptStat(0);
   //  TApplication app("myapp", 0, 0);
   gROOT -> SetBatch(kTRUE);
   gStyle -> SetOptStat(0);
   gStyle -> SetOptTitle(0);
-  printf("1 [%s] 2 [%s] 3 [%s] 4 [%s] 5 [%s] 6 [%s] 7 [%s] 8 [%s] 9 [%s] 10 [%s] 11 [%s] 12 [%s]\n", argv[1], argv[2], argv[3], argv[4], argv[5], argv[6], argv[7], argv[8], argv[9], argv[10], argv[11], argv[12]); 
-  const unsigned char   jetind           = stoi(argv[1]);
-  const unsigned char   chargeind        = stoi(argv[2]);
-  const char          * sampletag        = argv[3];
-  const char          * observable       = argv[4];
-  const unsigned char   levelind         = stoi(argv[5]);
-  const char          * method           = argv[6];
-  const bool            presampleTTJets  = string(argv[7]).compare("True") == 0 ? true : false;
-  const char          * binning_method   = argv[8];
-  const bool            calculate_bins   = string(argv[9]).compare("True") == 0 ? true : false;
-  const float           sfactor          = stof(argv[10]);
-  const bool            reg              = string(argv[11]).compare("True") == 0 ? true : false;
-  const bool            includecflip     = string(argv[12]).compare("True") == 0 ? true : false;
+  printf("1 [%s] 2 [%s] 3 [%s] 4 [%s] 5 [%s] 6 [%s] 7 [%s] 8 [%s] 9 [%s] 10 [%s] 11 [%s]\n", argv[1], argv[2], argv[3], argv[4], argv[5], argv[6], argv[7], argv[8], argv[9], argv[10], argv[11]); 
+  const unsigned char jetind    = stoi(argv[1]);
+  const unsigned char chargeind = stoi(argv[2]);
+  const char * sampletag        = argv[3];
+  const char * observable       = argv[4];
+  const unsigned char levelind  = stoi(argv[5]);
+  const char * method           = argv[6];
+  const bool   presampleTTJets  = string(argv[7]).compare("True") == 0 ? true : false;
+  const char * binning_method   = argv[8];
+  const bool   calculate_bins   = string(argv[9]).compare("True") == 0 ? true : false;
+  const float  sfactor          = stof(argv[10]);
+  const bool   reg              = string(argv[11]).compare("True") == 0 ? true : false;
   printf("regularisation %s\n", reg ? "True" : "False");  
   string sfactorstr(argv[10]);
   const size_t start_pos = sfactorstr.find(".");
@@ -51,7 +50,6 @@ int main(int argc, char * argv[])
   printf("calculate bins       %s\n", calculate_bins ? "True" : "False");
   printf("sigma factor         %f\n", sfactor);
   printf("regularisation       %s\n", reg ? "True" : "False");
-  printf("include cflip        %s\n", includecflip ? "True" : "False");
  string subdir = observable;
  string bintag = "";
  if (levelind == ORIG)
@@ -77,32 +75,10 @@ int main(int argc, char * argv[])
   TFile  * input_file = TFile::Open(input_file_name);
   CompoundHistoUnfolding * ch = (CompoundHistoUnfolding * )((TKey*) input_file -> GetListOfKeys() -> At(0)) -> ReadObj(); 
   //  chisto -> SetCHUnominal(ch);
-  ch -> PrintMigrationMatrix();
 
   input_file -> Close();
-  ch -> unfold(reg, includecflip);
-  ch -> GetLevel(OUT) -> SeparateSys();
-  ch -> GetLevel(IN) -> SeparateSys();
-  ch -> CreateMCTotal(OUT);
-  ch -> createCov_new();
-  ch -> CreateChiTable();
   ch -> PullAnalysis();
-  ch -> CreateTotalMCUnc(OUT, GEN, true, binning_method, "schmitt", includecflip, "lx");
-  ch -> CreateTotalMCUnc(OUT, GEN, false, binning_method, "schmitt", includecflip, "lx");
-  ch -> CreateDataGraph(OUT, GEN);
-  ch -> BottomLineTest();
-  ch -> CRComparisonPlots();
-  TCanvas *cgenOUT = ch -> CreateCombinedPlot(GEN, OUT);
-  cgenOUT -> SaveAs(TString("output/") + cgenOUT -> GetName() +  ".png");     
-  TFile * fschmitt = TFile::Open("output/save_schmitt.root", "RECREATE");
-  // printf("printing cov\n");
-  // ch -> GetLevel(OUT) -> GetCov() -> Print();
-  //ch -> GetLevel(OUT) -> GetHU(DATAMO, OUT) -> GetTH1(GEN) -> Print("all");
-  ch -> printforheplib();
-  ch -> Write();
-  fschmitt -> Close();
-  // app.Run(kTRUE);
-  // app.Terminate();
-
+  TCanvas *c = ch -> stabpur();
+  c -> SaveAs("output/stabpur.png");
+  ch -> PrintMigrationMatrix();
 }
-

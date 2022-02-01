@@ -49,13 +49,10 @@ int main(int argc, char * argv[])
   const char * folder           = "output";
   const char * chutitlepa       = "migration; reco [rad]; gen [rad]";
   const char * chutitlepv       = "migration; reco [a.u.]; gen [a.u.]";
-  const char * chutitlepvpar       = "migration; reco [a.u.]; gen [a.u.]";
   const char * XaxisTitlepa     = "#theta_{p} [rad]";
   const char * YaxisTitlepa     = "#frac{#Delta N}{#Delta #theta_{p}}";  
   const char * XaxisTitlepv     = "#vec{P} [a.u.]";
   const char * YaxisTitlepv     = "#frac{#Delta N}{#Delta #vec{P}}";  
-  const char * XaxisTitlepvpar     = "#vec{P}|| [a.u.]";
-  const char * YaxisTitlepvpar     = "#frac{#Delta N}{#Delta #vec{P}||}";  
   const char * chutitle         = nullptr;
   const char * XaxisTitle       = nullptr;
   const char * YaxisTitle       = nullptr;
@@ -71,7 +68,7 @@ int main(int argc, char * argv[])
       XaxisTitle = XaxisTitlepa;
       YaxisTitle = YaxisTitlepa;
     }
- if (string(observable) == "pvmag") 
+ if (string(observable).compare("pvmag") == 0)
     {
       bmin = 0.0;
       bmax = 0.015;
@@ -80,16 +77,6 @@ int main(int argc, char * argv[])
       XaxisTitle = XaxisTitlepv;
       YaxisTitle = YaxisTitlepv;
     }
-
- if (string(observable) == "pvmag_par")
-   {
-     bmin = 0.0;
-     bmax = 0.005;
-     //sfactor = 0.6;
-     chutitle = chutitlepvpar;
-     XaxisTitle = XaxisTitlepvpar;
-     YaxisTitle = YaxisTitlepvpar;
-   }
  const unsigned char nbins = 20;
  string subdir = observable;
  string bintag = "";
@@ -100,7 +87,7 @@ int main(int argc, char * argv[])
  TString binfilename;
  if (levelind == OPT)
     {
-      if (string(binning_method) == "SIGMA")
+      if (string(binning_method).compare("SIGMA") == 0)
 	{
 	  string sigmadirstr = string("SIGMA_") + sfactorstr;
 	  bintag += "_" + sigmadirstr;
@@ -117,10 +104,9 @@ int main(int argc, char * argv[])
 	    sfactorstr +
 	    "/bins" + sigmadirstr + ".txt";
 	}
-      if (string(binning_method) == "NEWOPT")
+      if (string(binning_method).compare("NEWOPT") == 0)
 	{
 	  //	  string sigmadirstr = string("SIGMA_") + sfactorstr;
-	  // TString observable = "pvmag";
 	  bintag = bintag + "_" + binning_method;
 	  subdir = subdir + "/" + binning_method;
 	  binfilename = TString(/*root://eosuser.cern.ch//*//*"$EOS*/"/eos/user/v/vveckaln/binning_") + observable + "/" + 
@@ -177,114 +163,79 @@ int main(int argc, char * argv[])
     {
       chisto = new CompoundHistoUnfolding(TString(tag_opt[levelind]) + "_" + sampletag + "_" + method, chutitle, nbins, bmin, bmax, nbins, bmin, bmax);
     }
-  // if (not presampleTTJets)
-  //   {
-  //     const TString input_folder = TString("/eos/user/v/vveckaln/unfolding_") + method + "/";
-  //     const TString input_file_name_MC13TeV_TTJets = input_folder + subdir + "/" + 
-  // 	tag_jet_types_[jetind] + '_' + 
-  // 	tag_charge_types_[chargeind] + '_' + 
-  // 	"MC13TeV_TTJets" + '_' + 
-  // 	observable + '_' + 
-  // 	tag_opt[levelind] + '_' + 
-  // 	method + bintag + "/save.root";
-  //     TFile  * input_file_MC13TeV_TTJets = TFile::Open(input_file_name_MC13TeV_TTJets);
-  //     CompoundHistoUnfolding * chistonominal = (CompoundHistoUnfolding * )((TKey*) input_file_MC13TeV_TTJets -> GetListOfKeys() -> At(0)) -> ReadObj(); 
-  //     chisto -> SetCHUnominal(chistonominal);
-  //     input_file_MC13TeV_TTJets -> Close();
-  //   }
-
-  if (string(method) == "cflip" or string(method) == "herwig")
+  if (not presampleTTJets)
     {
-      const TString input_folder = TString("/eos/user/v/vveckaln/unfolding_nominal/");
+      const TString input_folder = TString("/eos/user/v/vveckaln/unfolding_") + method + "/";
       const TString input_file_name_MC13TeV_TTJets = input_folder + subdir + "/" + 
 	tag_jet_types_[jetind] + '_' + 
 	tag_charge_types_[chargeind] + '_' + 
 	"MC13TeV_TTJets" + '_' + 
 	observable + '_' + 
 	tag_opt[levelind] + '_' + 
-	"nominal" + bintag + "/save.root";
-      printf("opening nominal CHU %s\n", input_file_name_MC13TeV_TTJets.Data());
+	method + bintag + "/save.root";
       TFile  * input_file_MC13TeV_TTJets = TFile::Open(input_file_name_MC13TeV_TTJets);
       CompoundHistoUnfolding * chistonominal = (CompoundHistoUnfolding * )((TKey*) input_file_MC13TeV_TTJets -> GetListOfKeys() -> At(0)) -> ReadObj(); 
       chisto -> SetCHUnominal(chistonominal);
       input_file_MC13TeV_TTJets -> Close();
     }
 
-
   //  chisto -> SetName(tag_opt[levelind]);
   chisto -> jetcode    = jetind;
   chisto -> chargecode = chargeind;
+  chisto -> SetSignalTag(sampletag);
   chisto -> SetObservable(observable);
   chisto -> optcode    = levelind;
   chisto -> SetMethod(method);
   chisto -> SetFolder(folder);
-  // chisto -> SetLuminosity(35874.8);
-  chisto -> SetLuminosity(36326.5);
+  chisto -> SetLuminosity(35874.8);
   chisto -> SetCOM("13 TeV");
   chisto -> SetXaxisTitle(XaxisTitle);
   chisto -> SetYaxisTitle(YaxisTitle);
   TFile * f = TFile::Open("output/save.root", "RECREATE");
   chisto -> calculate_bins = calculate_bins;
-  if (string(method) == "nominal")
-    {
-      chisto -> SetSignalTag("MC13TeV_TTJets");
-      chisto -> LoadHistos("/afs/cern.ch/work/v/vveckaln/private/CMSSW_9_4_11/src/TopLJets2015/TopAnalysis/data/era2016/samples.json");
-      // printf("stabpur after loading\n");
-      // chisto -> stabpur();
-      // getchar();
-      chisto -> LoadHistos("/afs/cern.ch/work/v/vveckaln/private/CMSSW_9_4_11/src/TopLJets2015/TopAnalysis/data/era2016/qcd_samples.json");
-      chisto -> AddXsecSystematics();
-      chisto -> LoadHistos("/afs/cern.ch/work/v/vveckaln/private/CMSSW_9_4_11/src/TopLJets2015/TopAnalysis/data/era2016/expsyst_samples.json", EXPSYS, sampletag);
-      chisto -> LoadHistos("/afs/cern.ch/work/v/vveckaln/private/CMSSW_9_4_11/src/TopLJets2015/TopAnalysis/data/era2016/syst_samples_pruned.json", THEORSYS, sampletag);
+  chisto -> LoadHistos("/afs/cern.ch/work/v/vveckaln/private/CMSSW_8_0_26_patch1/src/TopLJets2015/TopAnalysis/data/era2016/samples.json");
+  // printf("stabpur after loading\n");
+  // chisto -> stabpur();
+  // getchar();
+  chisto -> LoadHistos("/afs/cern.ch/work/v/vveckaln/private/CMSSW_8_0_26_patch1/src/TopLJets2015/TopAnalysis/data/era2016/qcd_samples.json");
+  chisto -> AddXsecSystematics();
+  chisto -> LoadHistos("/afs/cern.ch/work/v/vveckaln/private/CMSSW_8_0_26_patch1/src/TopLJets2015/TopAnalysis/data/era2016/expsyst_samples.json", EXPSYS, sampletag);
+  chisto -> LoadHistos("/afs/cern.ch/work/v/vveckaln/private/CMSSW_8_0_26_patch1/src/TopLJets2015/TopAnalysis/data/era2016/syst_samples_pruned.json", THEORSYS, sampletag);
   
-      chisto -> LoadHistos("/afs/cern.ch/work/v/vveckaln/private/CMSSW_9_4_11/src/TopLJets2015/TopAnalysis/data/era2016/syst_samples_MC13TeV_SingleT_tW.json", THEORSYS, "MC13TeV_SingleT_tW");
-      chisto -> LoadHistos("/afs/cern.ch/work/v/vveckaln/private/CMSSW_9_4_11/src/TopLJets2015/TopAnalysis/data/era2016/syst_samples_MC13TeV_SingleTbar_tW.json", THEORSYS, "MC13TeV_SingleTbar_tW");
-    }
-  else if (string(method) == "cflip" or string(method) == "herwig")
-    {
-      chisto -> SetSignalTag(TString("MC13TeV_TTJets_") + method);
-      chisto -> TransferHistos("/afs/cern.ch/work/v/vveckaln/private/CMSSW_9_4_11/src/TopLJets2015/TopAnalysis/data/era2016/samples.json");
-      chisto -> LoadHistos_cflip(TString("/afs/cern.ch/work/v/vveckaln/private/CMSSW_9_4_11/src/TopLJets2015/TopAnalysis/data/era2016/samples_") + method + ".json");
+  chisto -> LoadHistos("/afs/cern.ch/work/v/vveckaln/private/CMSSW_8_0_26_patch1/src/TopLJets2015/TopAnalysis/data/era2016/syst_samples_MC13TeV_SingleT_tW.json", THEORSYS, "MC13TeV_SingleT_tW");
+  chisto -> LoadHistos("/afs/cern.ch/work/v/vveckaln/private/CMSSW_8_0_26_patch1/src/TopLJets2015/TopAnalysis/data/era2016/syst_samples_MC13TeV_SingleTbar_tW.json", THEORSYS, "MC13TeV_SingleTbar_tW");
 
-      chisto -> TransferHistos("/afs/cern.ch/work/v/vveckaln/private/CMSSW_9_4_11/src/TopLJets2015/TopAnalysis/data/era2016/qcd_samples.json");
-      //      chisto -> AddXsecSystematics();
-      chisto -> LoadHistos_cflip("/afs/cern.ch/work/v/vveckaln/private/CMSSW_9_4_11/src/TopLJets2015/TopAnalysis/data/era2016/expsyst_samples.json", EXPSYS, TString("MC13TeV_TTJets_") + method);
-      chisto -> TransferHistos("/afs/cern.ch/work/v/vveckaln/private/CMSSW_9_4_11/src/TopLJets2015/TopAnalysis/data/era2016/syst_samples_pruned.json", THEORSYS, "MC13TeV_TTJets");
-  
-      chisto -> TransferHistos("/afs/cern.ch/work/v/vveckaln/private/CMSSW_9_4_11/src/TopLJets2015/TopAnalysis/data/era2016/syst_samples_MC13TeV_SingleT_tW.json", THEORSYS, "MC13TeV_SingleT_tW");
-      chisto -> TransferHistos("/afs/cern.ch/work/v/vveckaln/private/CMSSW_9_4_11/src/TopLJets2015/TopAnalysis/data/era2016/syst_samples_MC13TeV_SingleTbar_tW.json", THEORSYS, "MC13TeV_SingleTbar_tW");
-    }
-  if (string(method) == "cflip" and string(sampletag) == "MC13TeV_TTJets")
+  if (string(method).compare("cflip") == 0 and string(sampletag).compare("MC13TeV_TTJets") == 0)
     {
       chisto -> MarkSysSample("MC13TeV_TTJets_cflip");
     }
   if (not calculate_bins)
     {
       chisto -> ApproximateTheorSys();
-      chisto -> Process(reg);
+      //      chisto -> Process(reg);
       //      printf("stabpur after processing\n");
       // chisto -> stabpur();
       // getchar();
       //      chisto -> PullAnalysis();
-      TCanvas *crecoIN = chisto -> CreateCombinedPlot(RECO, IN);
-      crecoIN -> SaveAs(TString("output/") + crecoIN -> GetName() +  ".png");     
-      TPad * pad1 = (TPad *) crecoIN -> GetListOfPrimitives() -> At(0);
+      // TCanvas *crecoIN = chisto -> CreateCombinedPlot(RECO, IN);
+      // crecoIN -> SaveAs(TString("output/") + crecoIN -> GetName() +  ".png");     
+      // TPad * pad1 = (TPad *) crecoIN -> GetListOfPrimitives() -> At(0);
 	    
-      TCanvas *cgenIN = chisto -> CreateCombinedPlot(GEN, IN);
-      cgenIN -> SaveAs(TString("output/") + cgenIN -> GetName() +  ".png");     
+      // TCanvas *cgenIN = chisto -> CreateCombinedPlot(GEN, IN);
+      // cgenIN -> SaveAs(TString("output/") + cgenIN -> GetName() +  ".png");     
       
-      TCanvas *crecoOUT = chisto -> CreateCombinedPlot(RECO, OUT);
-      crecoOUT -> SaveAs(TString("output/") + crecoOUT -> GetName() +  ".png");     
+      // TCanvas *crecoOUT = chisto -> CreateCombinedPlot(RECO, OUT);
+      // crecoOUT -> SaveAs(TString("output/") + crecoOUT -> GetName() +  ".png");     
 
-      TCanvas *cgenOUT = chisto -> CreateCombinedPlot(GEN, OUT);
-      cgenOUT -> SaveAs(TString("output/") + cgenOUT -> GetName() +  ".png");     
+      // TCanvas *cgenOUT = chisto -> CreateCombinedPlot(GEN, OUT);
+      // cgenOUT -> SaveAs(TString("output/") + cgenOUT -> GetName() +  ".png");     
 
-      //      FILE * pFile = fopen("output/chi2.txt", "w");
+      // FILE * pFile = fopen("output/chi2.txt", "w");
       // const double chi2 = chisto -> GetChi();
       // const unsigned char ndf = chisto -> GetLevel(OUT) -> GetHU(SIGNALPROXY, OUT) -> GetTH1(GEN) -> GetNbinsX() - 1;
       // const float pvalue = TMath::Prob(chi2, ndf);
       // fprintf(pFile, "%s, %f %f\n", chisto -> GetLevel(IN) -> GetHU(SIGNALPROXY, OUT) -> GetTitle(), chi2, pvalue);
-      // HistoUnfolding *signaltemp = chisto -> GetLevel(IN) -> GetHU(SIGNALPROXY, IN);
+      HistoUnfolding *signaltemp = chisto -> GetLevel(IN) -> GetHU(SIGNALPROXY, IN);
       // for (vector<HistoUnfolding *> :: iterator it = chisto -> GetLevel(IN) -> GetV(SYSMO, "MC13TeV_TTJets")  -> begin(); it != chisto -> GetLevel(IN) -> GetV(SYSMO, "MC13TeV_TTJets") -> end(); it ++)
       // 	{
       // 	  chisto -> GetLevel(IN) -> GetHURef(SIGNALPROXY, IN) = * it;
@@ -293,16 +244,16 @@ int main(int argc, char * argv[])
       // 	  fprintf(pFile, "%s, %f %f\n", chisto -> GetLevel(IN) -> GetHU(SIGNALPROXY, IN) -> GetTitle(), chi2, pvalue);
 	  
       // 	}
-      // chisto -> GetLevel(IN) -> GetHURef(SIGNALMO) = signaltemp;
+      chisto -> GetLevel(IN) -> GetHURef(SIGNALMO) = signaltemp;
       // fclose(pFile);
-      FILE * bfile = fopen("output/binfile.txt", "w");
-      fprintf(bfile, "%u\n", chisto -> GetLevel(OUT) -> GetHU(SIGNALPROXY, OUT) -> GetTH1(GEN) -> GetNbinsX());
-      for (unsigned char bind = 1; bind < chisto -> GetLevel(OUT) -> GetHU(SIGNALPROXY, OUT) -> GetTH1(GEN) -> GetNbinsX() + 2; bind ++)
-	{
-	  fprintf(bfile, "%f\n", chisto -> GetLevel(OUT) -> GetHU(SIGNALPROXY, OUT) -> GetTH1(GEN) -> GetBinLowEdge(bind));
+      // FILE * bfile = fopen("output/binfile.txt", "w");
+      // fprintf(bfile, "%u\n", chisto -> GetLevel(OUT) -> GetHU(SIGNALPROXY, OUT) -> GetTH1(GEN) -> GetNbinsX());
+      // for (unsigned char bind = 1; bind < chisto -> GetLevel(OUT) -> GetHU(SIGNALPROXY, OUT) -> GetTH1(GEN) -> GetNbinsX() + 2; bind ++)
+      // 	{
+      // 	  fprintf(bfile, "%f\n", chisto -> GetLevel(OUT) -> GetHU(SIGNALPROXY, OUT) -> GetTH1(GEN) -> GetBinLowEdge(bind));
 
-	}
-      fclose(bfile);
+      // 	}
+      // fclose(bfile);
       /*f -> cd();
       chisto -> GetLevel(IN) -> GetHU(SIGNALMO) -> GetTH2() -> Write();
       printf("GEN IN\n");*/
@@ -332,30 +283,27 @@ int main(int argc, char * argv[])
 	  }*/
     }
   //chisto.Do();
-  if (string(binning_method) == "SIGMA")
-    {
-      unsigned long size;
-      float * ybins = chisto -> splitForMinSigmaM(size, sfactor);
-      string binfilename(folder); 
-      binfilename = binfilename + "/binsSIGMA_" + sfactorstr + ".txt";
-      printf("binfilename %s\n", binfilename.c_str());
-      FILE * pFile_bins = fopen(binfilename.c_str(), "w");
-      fprintf(pFile_bins, "%lu\n", size);
+  // if (string(binning_method).compare("SIGMA") == 0)
+  //   {
+  //     unsigned long size;
+  //     float * ybins = chisto -> splitForMinSigmaM(size, sfactor);
+  //     string binfilename(folder); 
+  //     binfilename = binfilename + "/binsSIGMA_" + sfactorstr + ".txt";
+  //     printf("binfilename %s\n", binfilename.c_str());
+  //     FILE * pFile_bins = fopen(binfilename.c_str(), "w");
+  //     fprintf(pFile_bins, "%lu\n", size);
 
-      for (unsigned long ind = 0; ind < size; ind ++)
-	{
-	  fprintf(pFile_bins, "%f\n", ybins[ind]);
-	}
-      fclose(pFile_bins);
-      delete [] ybins;
-      //f -> cd();
-      //      chisto -> GetLevel(IN) -> GetHU(SIGNALMO) -> GetTH2() -> Write();
-    }
+  //     for (unsigned long ind = 0; ind < size; ind ++)
+  // 	{
+  // 	  fprintf(pFile_bins, "%f\n", ybins[ind]);
+  // 	}
+  //     fclose(pFile_bins);
+  //     delete [] ybins;
+  //     //f -> cd();
+  //     //      chisto -> GetLevel(IN) -> GetHU(SIGNALMO) -> GetTH2() -> Write();
+  //   }
   f -> cd();
   chisto -> SetCHUnominal(nullptr);
-  TCanvas * stabpur = chisto -> stabpur();
-  stabpur -> SaveAs("output/stabpur.png");
-  chisto -> printforheplib();
   chisto -> Write();
   f -> Close();
   delete chisto;

@@ -109,7 +109,7 @@ int main(int argc, char * argv[])
 		tag_opt[opt_level] + '_' + 
 		method + bintag + "/chi2.txt";
 	      printf("input file name %s\n", input_file_name.Data());
-	      system(string("cat ") + input_file_name);
+	      //	      system(string("cat ") + input_file_name);
 	      FILE  * input_file = fopen(input_file_name, "r");
 	      char unc[64];
 	      float chi;
@@ -117,6 +117,7 @@ int main(int argc, char * argv[])
 	      fscanf(input_file, "%64[^,]%*c%f%f\n", unc, &chi, &pvalue);
 	      //		      if (opt_level == OPT and jetcode == 0)
 	      //		getchar();
+	      printf("%s %f %f\n", unc, chi, pvalue);
 	      fclose(input_file);
 
 	      fprintf(file, " & %s & %u & %s", insertnumber(chi, ".2").Data(), ndf, insertnumber(pvalue, ".3").Data());

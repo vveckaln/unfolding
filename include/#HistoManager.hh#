@@ -1,0 +1,73 @@
+#ifndef _HistoManager_hh_
+#define _HistoManager_hh_
+#include "TH1.h"
+#include <vector>
+#include <map>
+#include "SampleDescriptor.hh"
+#include "Definitions.hh"
+#include "TString.h"
+#include "THStack.h"
+#include "TCanvas.h"
+#include "TGraph.h"
+#include "TPad.h"
+using namespace std;
+
+
+class Histo: public SampleDescriptor 
+{
+public:
+  Histo(TH1 *, SampleDescriptor);
+  Histo(TH1 *, SampleDescriptor *);
+
+  TH1 * _th1;
+};
+
+
+class CompoundHisto
+{
+  void AggregateBackgroundMCs();
+  void FormatHistograms();
+  void CreateDataGraph();
+  map<TString, Histo *> _mbackgroundMC;
+public:
+  CompoundHisto();
+  vector<Histo *> _vdatahistos;
+  
+  vector<Histo *> _vsignalhistos;
+  vector<Histo *> _vbackgroundhistos;
+  vector<Histo *> _vsyshistos;
+
+  TGraph * _datagr;
+  TH1 * _datath1;
+  Histo * _signalh;
+  TH1 * _backgroundth1;
+  TH1 * _totalMCth1;
+  TH1 * _totalMCUncth1;
+  TH1 * _totalMCUncShapeth1;
+  TPad * _p1;
+  TPad * _p2;
+  TGraph * _ratiogr;
+  TH1 * _ratioframe;
+  TH1 * _ratioframeshape;
+  TH1 * GetDataHistogram();
+  TH1 * GetSignalHistogram();
+  TH1 * GetBackgroundHistogram();
+  void LoadSamples(const char *, SysTypeCode_t = NOMINAL);
+  void AddHisto(Histo *);
+  void LoadSys(const char *);
+  TH1 * NewMCTotal(const char * = "MCtotal");
+  TH1 * NewDataMinusBackground();
+  void CreateTotalMCUnc();
+  void CreateTotalMCUncShape();
+  THStack * CreateTHStack();
+  void PlotDataMC();
+  void Do();
+  void Process();
+  TPad * CreateRatioGraph();
+  TPad * CreateMainPlot();
+  TCanvas * CreateCombinedPlot();
+};
+
+
+#endif
+

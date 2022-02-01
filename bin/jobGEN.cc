@@ -47,17 +47,21 @@ int main(int argc, char * argv[])
   const char * folder           = "output";
   const char * chutitlepa       = "migration; reco #left[#frac{rad}{#pi}#right]; gen #left[#frac{rad}{#pi}#right]";
   const char * chutitlepv       = "migration; reco [a.u.]; gen [a.u.]";
+  const char * chutitlepvpar       = "migration; reco [a.u.]; gen [a.u.]";
   const char * XaxisTitlepa     = "#theta_{p} #left[#frac{rad}{#pi}#right]";
   const char * YaxisTitlepa     = "#frac{#Delta N}{#Delta #theta_{p}}";  
   const char * XaxisTitlepv     = "#vec{P} [a.u.]";
   const char * YaxisTitlepv     = "#frac{#Delta N}{#Delta #vec{P}}";  
+  const char * XaxisTitlepvpar     = "#vec{P}|| [a.u.]";
+  const char * YaxisTitlepvpar     = "#frac{#Delta N}{#Delta #vec{P}||}";  
+
   const char * chutitle         = nullptr;
   const char * XaxisTitle       = nullptr;
   const char * YaxisTitle       = nullptr;
   CompoundHistoUnfolding * chisto(nullptr);
   float bmin;
   float bmax;
-  if (string(observable).compare("pull_angle") == 0)
+  if (string(observable) == "pull_angle")
     {
       bmin = 0.0;
       bmax = 1.0;//TMath::Pi();
@@ -66,7 +70,7 @@ int main(int argc, char * argv[])
       XaxisTitle = XaxisTitlepa;
       YaxisTitle = YaxisTitlepa;
     }
- if (string(observable).compare("pvmag") == 0)
+ if (string(observable) == "pvmag")
     {
       bmin = 0.0;
       bmax = 0.015;
@@ -75,6 +79,17 @@ int main(int argc, char * argv[])
       XaxisTitle = XaxisTitlepv;
       YaxisTitle = YaxisTitlepv;
     }
+
+ if (string(observable) == "pvmag_par")
+    {
+      bmin = 0.0;
+      bmax = 0.005;
+      //sfactor = 0.6;
+      chutitle = chutitlepv;
+      XaxisTitle = XaxisTitlepv;
+      YaxisTitle = YaxisTitlepv;
+    }
+
  const unsigned char nbins = 20;
  string subdir = observable;
  string bintag = "";
@@ -85,7 +100,7 @@ int main(int argc, char * argv[])
  TString binfilename;
  if (levelind == OPT)
     {
-      if (string(binning_method).compare("SIGMA") == 0)
+      if (string(binning_method) == "SIGMA")
 	{
 	  string sigmadirstr = string("SIGMA_") + sfactorstr;
 	  bintag += "_" + sigmadirstr;
@@ -105,6 +120,19 @@ int main(int argc, char * argv[])
 	  sprintf( command, "xrdcp %s .", binfilename.Data());
 	  system(command);
 	  binfilename = TString("bins") + sigmadirstr + ".txt";
+	}
+      if (string(binning_method) == "NEWOPT")
+	{
+	  //	  string sigmadirstr = string("SIGMA_") + sfactorstr;
+	  bintag = bintag + "_" + binning_method;
+	  subdir = subdir + "/" + binning_method;
+	  binfilename = TString(/*root://eosuser.cern.ch//*//*"$EOS*/"/eos/user/v/vveckaln/binning_") + observable + "/" + 
+	    observable + "_" +
+	    tag_charge_types_[chargeind] + '_' + 
+	    tag_jet_types_[jetind] +
+	    "/bins_" + tag_charge_types_[chargeind] + '_' + 
+	    tag_jet_types_[jetind]
+	    + ".txt";
 	}
       else
 	{
@@ -166,7 +194,7 @@ int main(int argc, char * argv[])
   chisto -> SetXaxisTitle(XaxisTitle);
   chisto -> SetYaxisTitle(YaxisTitle);
   chisto -> calculate_bins = calculate_bins;
-  chisto -> LoadHistos(TString("/afs/cern.ch/work/v/vveckaln/private/CMSSW_8_0_26_patch1/src/TopLJets2015/TopAnalysis/data/era2016/samples_") + method + ".json", THEORSYS, sampletag);
+  chisto -> LoadHistos(TString("/afs/cern.ch/work/v/vveckaln/private/CMSSW_9_4_11/src/TopLJets2015/TopAnalysis/data/era2016/samples_") + method + ".json", THEORSYS, sampletag);
 
   chisto -> SetCHUnominal(nullptr);
   TFile * f = TFile::Open("output/save.root", "RECREATE");
